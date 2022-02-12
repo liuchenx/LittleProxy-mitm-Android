@@ -1,8 +1,4 @@
-
-
-21.09.2019 - Frank Ganske, about this abandoned repository and new versions
-
-Unfortunately I've lost my PGP private key for uploading Maven artifacts to the Central Repository. So version 1.1.0 will be the last I think.
+![CI](https://github.com/liuchenx/LittleProxy-mitm-Android/actions/workflows/gradle-publish.yml/badge.svg)
 
 LittleProxy - Man-In-The-Middle
 ===============================
@@ -22,12 +18,16 @@ Software".
 
 Add this dependency to your Maven build:
 
-```xml
-<dependency>
-   <groupId>com.github.ganskef</groupId>
-   <artifactId>littleproxy-mitm</artifactId>
-   <version>1.1.0</version>
-</dependency>
+```groovy
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/liuchenx/LittleProxy-mitm-Android")
+    }
+}
+
+dependencies {
+    implementation("me.liuyichen.yuna:littleproxy-mitm-android:1.1.0")
+}
 ```
 The version corresponds to LittleProxy since the intention was to integrate it 
 as a module.

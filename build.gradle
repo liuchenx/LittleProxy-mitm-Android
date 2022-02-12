@@ -1,0 +1,18 @@
+apply plugin: 'java'
+
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    implementation 'com.madgag.spongycastle:bcpkix-jdk15on:1.58.0.0'
+    implementation 'com.madgag.spongycastle:bcpg-jdk15on:1.58.0.0'
+    compileOnly('org.littleshoot:littleproxy:1.1.2') {
+        exclude(module: 'barchart-udt-bundle')
+        exclude(module: 'commons-cli')
+    }
+    compileOnly group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.7.25'
+}
+

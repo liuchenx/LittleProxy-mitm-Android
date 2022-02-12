@@ -30,29 +30,29 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.apache.commons.io.IOUtils;
-import org.bouncycastle.asn1.ASN1EncodableVector;
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x500.X500NameBuilder;
-import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.Extension;
-import org.bouncycastle.asn1.x509.KeyPurposeId;
-import org.bouncycastle.asn1.x509.KeyUsage;
-import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.X509v3CertificateBuilder;
-import org.bouncycastle.cert.bc.BcX509ExtensionUtils;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+
+import org.spongycastle.asn1.ASN1EncodableVector;
+import org.spongycastle.asn1.ASN1InputStream;
+import org.spongycastle.asn1.ASN1Sequence;
+import org.spongycastle.asn1.DERSequence;
+import org.spongycastle.asn1.x500.X500Name;
+import org.spongycastle.asn1.x500.X500NameBuilder;
+import org.spongycastle.asn1.x500.style.BCStyle;
+import org.spongycastle.asn1.x509.BasicConstraints;
+import org.spongycastle.asn1.x509.Extension;
+import org.spongycastle.asn1.x509.KeyPurposeId;
+import org.spongycastle.asn1.x509.KeyUsage;
+import org.spongycastle.asn1.x509.SubjectKeyIdentifier;
+import org.spongycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.spongycastle.cert.X509CertificateHolder;
+import org.spongycastle.cert.X509v3CertificateBuilder;
+import org.spongycastle.cert.bc.BcX509ExtensionUtils;
+import org.spongycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.spongycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.spongycastle.jce.provider.BouncyCastleProvider;
+import org.spongycastle.operator.ContentSigner;
+import org.spongycastle.operator.OperatorCreationException;
+import org.spongycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +63,7 @@ public final class CertificateHelper {
     public static final String PROVIDER_NAME = BouncyCastleProvider.PROVIDER_NAME;
 
     static {
-        Security.addProvider(new BouncyCastleProvider());
+        Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
     }
 
     private static final String KEYGEN_ALGORITHM = "RSA";
@@ -146,7 +146,28 @@ public final class CertificateHelper {
         return bits != null && bits == 32;
     }
 
-    public static KeyStore createRootCertificate(Authority authority,
+    public static KeyStore createRootCertificate(String commonName,
+                                                 String organisationName,
+                                                 String organizationalUnitName,
+                                                 String alias,
+                                                 char[] password,
+                                                 String keyStoreType) throws NoSuchAlgorithmException,
+            NoSuchProviderException, IOException,
+            OperatorCreationException, CertificateException, KeyStoreException {
+
+        return createRootCertificate(commonName
+                , organisationName
+                , organizationalUnitName
+                , BigInteger.valueOf(initRandomSerial())
+                , alias, password, keyStoreType);
+    }
+
+    public static KeyStore createRootCertificate(String commonName,
+                                                 String organisationName,
+                                                 String organizationalUnitName,
+                                                 BigInteger serial,
+                                                 String alias,
+                                                 char[] password,
             String keyStoreType) throws NoSuchAlgorithmException,
             NoSuchProviderException, IOException,
             OperatorCreationException, CertificateException, KeyStoreException {
@@ -154,12 +175,11 @@ public final class CertificateHelper {
         KeyPair keyPair = generateKeyPair(ROOT_KEYSIZE);
 
         X500NameBuilder nameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
-        nameBuilder.addRDN(BCStyle.CN, authority.commonName());
-        nameBuilder.addRDN(BCStyle.O, authority.organization());
-        nameBuilder.addRDN(BCStyle.OU, authority.organizationalUnitName());
+        nameBuilder.addRDN(BCStyle.CN, commonName);
+        nameBuilder.addRDN(BCStyle.O, organisationName);
+        nameBuilder.addRDN(BCStyle.OU, organizationalUnitName);
 
         X500Name issuer = nameBuilder.build();
-        BigInteger serial = BigInteger.valueOf(initRandomSerial());
         X500Name subject = issuer;
         PublicKey pubKey = keyPair.getPublic();
 
@@ -188,28 +208,30 @@ public final class CertificateHelper {
         KeyStore result = KeyStore
                 .getInstance(keyStoreType/* , PROVIDER_NAME */);
         result.load(null, null);
-        result.setKeyEntry(authority.alias(), keyPair.getPrivate(),
-                authority.password(), new Certificate[] { cert });
+        result.setKeyEntry(alias, keyPair.getPrivate(), password, new Certificate[] { cert });
         return result;
     }
 
     private static SubjectKeyIdentifier createSubjectKeyIdentifier(Key key)
             throws IOException {
-        ByteArrayInputStream bIn = new ByteArrayInputStream(key.getEncoded());
-        ASN1InputStream is = null;
-        try {
-            is = new ASN1InputStream(bIn);
+
+
+        try (ByteArrayInputStream bIn = new ByteArrayInputStream(key.getEncoded());
+             ASN1InputStream is = new ASN1InputStream(bIn)) {
+
             ASN1Sequence seq = (ASN1Sequence) is.readObject();
             SubjectPublicKeyInfo info = new SubjectPublicKeyInfo(seq);
             return new BcX509ExtensionUtils().createSubjectKeyIdentifier(info);
-        } finally {
-            IOUtils.closeQuietly(is);
         }
     }
 
     public static KeyStore createServerCertificate(String commonName,
+            String organisationName,
+            String organizationalUnitName,
             SubjectAlternativeNameHolder subjectAlternativeNames,
-            Authority authority, Certificate caCert, PrivateKey caPrivKey)
+            String alias,
+            char[] password,
+            Certificate caCert, PrivateKey caPrivKey)
             throws NoSuchAlgorithmException, NoSuchProviderException,
             IOException, OperatorCreationException, CertificateException,
             InvalidKeyException, SignatureException, KeyStoreException {
@@ -222,8 +244,8 @@ public final class CertificateHelper {
 
         X500NameBuilder name = new X500NameBuilder(BCStyle.INSTANCE);
         name.addRDN(BCStyle.CN, commonName);
-        name.addRDN(BCStyle.O, authority.certOrganisation());
-        name.addRDN(BCStyle.OU, authority.certOrganizationalUnitName());
+        name.addRDN(BCStyle.O, organisationName);
+        name.addRDN(BCStyle.OU, organizationalUnitName);
         X500Name subject = name.build();
 
         X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuer, serial, NOT_BEFORE,
@@ -245,8 +267,7 @@ public final class CertificateHelper {
         /* , PROVIDER_NAME */);
         result.load(null, null);
         Certificate[] chain = { cert, caCert };
-        result.setKeyEntry(authority.alias(), keyPair.getPrivate(),
-                authority.password(), chain);
+        result.setKeyEntry(alias, keyPair.getPrivate(), password, chain);
 
         return result;
     }
@@ -272,13 +293,13 @@ public final class CertificateHelper {
     }
 
     public static KeyManager[] getKeyManagers(KeyStore keyStore,
-            Authority authority) throws NoSuchAlgorithmException,
+            char[] password) throws NoSuchAlgorithmException,
             NoSuchProviderException, UnrecoverableKeyException,
             KeyStoreException {
         String keyManAlg = KeyManagerFactory.getDefaultAlgorithm();
         KeyManagerFactory kmf = KeyManagerFactory.getInstance(keyManAlg
         /* , PROVIDER_NAME */);
-        kmf.init(keyStore, authority.password());
+        kmf.init(keyStore, password);
         return kmf.getKeyManagers();
     }
 

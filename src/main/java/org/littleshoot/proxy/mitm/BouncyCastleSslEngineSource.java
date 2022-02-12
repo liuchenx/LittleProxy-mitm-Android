@@ -2,20 +2,13 @@ package org.littleshoot.proxy.mitm;
 
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -28,9 +21,8 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManager;
 
-import org.apache.commons.io.IOUtils;
-import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-import org.bouncycastle.operator.OperatorCreationException;
+
+import org.spongycastle.operator.OperatorCreationException;
 import org.littleshoot.proxy.SslEngineSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,9 +65,6 @@ public class BouncyCastleSslEngineSource implements SslEngineSource {
 
     private SSLContext sslContext;
 
-    private Certificate caCert;
-
-    private PrivateKey caPrivKey;
 
     private Cache<String, SSLContext> serverSSLContexts;
 
@@ -100,15 +89,14 @@ public class BouncyCastleSslEngineSource implements SslEngineSource {
      *            give a null cache to prevent memory or locking issues.
      */
     public BouncyCastleSslEngineSource(Authority authority,
-            boolean trustAllServers, boolean sendCerts,
-            Cache<String, SSLContext> sslContexts)
+                                       boolean trustAllServers, boolean sendCerts,
+                                       Cache<String, SSLContext> sslContexts)
             throws GeneralSecurityException, OperatorCreationException,
             RootCertificateException, IOException {
         this.authority = authority;
         this.trustAllServers = trustAllServers;
         this.sendCerts = sendCerts;
         this.serverSSLContexts = sslContexts;
-        initializeKeyStore();
         initializeSSLContext();
     }
 
@@ -128,7 +116,7 @@ public class BouncyCastleSslEngineSource implements SslEngineSource {
      * @param sendCerts
      */
     public BouncyCastleSslEngineSource(Authority authority,
-            boolean trustAllServers, boolean sendCerts)
+                                       boolean trustAllServers, boolean sendCerts)
             throws RootCertificateException, GeneralSecurityException,
             IOException, OperatorCreationException {
         this(authority, trustAllServers, sendCerts,
@@ -209,37 +197,9 @@ public class BouncyCastleSslEngineSource implements SslEngineSource {
         return false;
     }
 
-    private void initializeKeyStore() throws RootCertificateException,
-            GeneralSecurityException, OperatorCreationException, IOException {
-        if (authority.aliasFile(KEY_STORE_FILE_EXTENSION).exists()
-                && authority.aliasFile(".pem").exists()) {
-            return;
-        }
-        MillisecondsDuration duration = new MillisecondsDuration();
-        KeyStore keystore = CertificateHelper.createRootCertificate(authority,
-                KEY_STORE_TYPE);
-        LOG.info("Created root certificate authority key store in {}ms",
-                duration);
 
-        OutputStream os = null;
-        try {
-            os = new FileOutputStream(
-                    authority.aliasFile(KEY_STORE_FILE_EXTENSION));
-            keystore.store(os, authority.password());
-        } finally {
-            IOUtils.closeQuietly(os);
-        }
-
-        Certificate cert = keystore.getCertificate(authority.alias());
-        exportPem(authority.aliasFile(".pem"), cert);
-    }
-
-    private void initializeSSLContext() throws GeneralSecurityException,
-            IOException {
-        KeyStore ks = loadKeyStore();
-        caCert = ks.getCertificate(authority.alias());
-        caPrivKey = (PrivateKey) ks.getKey(authority.alias(),
-                authority.password());
+    private void initializeSSLContext() throws GeneralSecurityException {
+        KeyStore ks = authority.keyStore();
 
         TrustManager[] trustManagers;
         if (trustAllServers) {
@@ -251,7 +211,7 @@ public class BouncyCastleSslEngineSource implements SslEngineSource {
 
         KeyManager[] keyManagers;
         if (sendCerts) {
-            keyManagers = CertificateHelper.getKeyManagers(ks, authority);
+            keyManagers = CertificateHelper.getKeyManagers(ks, authority.password());
         } else {
             keyManagers = new KeyManager[0];
         }
@@ -264,19 +224,6 @@ public class BouncyCastleSslEngineSource implements SslEngineSource {
         }
     }
 
-    private KeyStore loadKeyStore() throws GeneralSecurityException,
-            IOException {
-        KeyStore ks = KeyStore.getInstance(KEY_STORE_TYPE);
-        FileInputStream is = null;
-        try {
-            is = new FileInputStream(
-                    authority.aliasFile(KEY_STORE_FILE_EXTENSION));
-            ks.load(is, authority.password());
-        } finally {
-            IOUtils.closeQuietly(is);
-        }
-        return ks;
-    }
 
     /**
      * Generates an 1024 bit RSA key pair using SHA1PRNG. Thoughts: 2048 takes
@@ -294,8 +241,7 @@ public class BouncyCastleSslEngineSource implements SslEngineSource {
      *            a List of the subject alternative names to use in the server
      *            certificate, could be empty, but must not be null
      * 
-     * @see org.parosproxy.paros.security.SslCertificateServiceImpl.
-     *      createCertForHost(String)
+     * @see org.parosproxy.paros.security.SslCertificateServiceImpl.createCertForHost(String)
      * @see org.parosproxy.paros.network.SSLConnector.getTunnelSSLSocketFactory(
      *      String)
      */
@@ -335,9 +281,14 @@ public class BouncyCastleSslEngineSource implements SslEngineSource {
         MillisecondsDuration duration = new MillisecondsDuration();
 
         KeyStore ks = CertificateHelper.createServerCertificate(commonName,
-                subjectAlternativeNames, authority, caCert, caPrivKey);
-        KeyManager[] keyManagers = CertificateHelper.getKeyManagers(ks,
-                authority);
+                authority.organization(),
+                authority.organizationalUnitName(),
+                subjectAlternativeNames,
+                authority.alias(),
+                authority.password(),
+                authority.getCACertificate(),
+                authority.privateKey());
+        KeyManager[] keyManagers = CertificateHelper.getKeyManagers(ks, authority.password());
 
         SSLContext result = CertificateHelper.newServerContext(keyManagers);
 
@@ -345,38 +296,6 @@ public class BouncyCastleSslEngineSource implements SslEngineSource {
         return result;
     }
 
-    public void initializeServerCertificates(String commonName,
-            SubjectAlternativeNameHolder subjectAlternativeNames)
-            throws GeneralSecurityException, OperatorCreationException,
-            IOException {
-
-        KeyStore ks = CertificateHelper.createServerCertificate(commonName,
-                subjectAlternativeNames, authority, caCert, caPrivKey);
-
-        PrivateKey key = (PrivateKey) ks.getKey(authority.alias(),
-                authority.password());
-        exportPem(authority.aliasFile("-" + commonName + "-key.pem"), key);
-
-        Object[] certs = ks.getCertificateChain(authority.alias());
-        exportPem(authority.aliasFile("-" + commonName + "-cert.pem"), certs);
-    }
-
-    private void exportPem(File exportFile, Object... certs)
-            throws IOException, CertificateEncodingException {
-        Writer sw = null;
-        JcaPEMWriter pw = null;
-        try {
-            sw = new FileWriter(exportFile);
-            pw = new JcaPEMWriter(sw);
-            for (Object cert : certs) {
-                pw.writeObject(cert);
-                pw.flush();
-            }
-        } finally {
-            IOUtils.closeQuietly(pw);
-            IOUtils.closeQuietly(sw);
-        }
-    }
 
 }
 

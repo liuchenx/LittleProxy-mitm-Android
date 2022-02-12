@@ -22,11 +22,7 @@ public class CertificateSniffingMitmManager implements MitmManager {
     private static final Logger LOG = LoggerFactory
             .getLogger(CertificateSniffingMitmManager.class);
 
-    private BouncyCastleSslEngineSource sslEngineSource;
-
-    public CertificateSniffingMitmManager() throws RootCertificateException {
-        this(new Authority());
-    }
+    private final BouncyCastleSslEngineSource sslEngineSource;
 
     public CertificateSniffingMitmManager(Authority authority)
             throws RootCertificateException {

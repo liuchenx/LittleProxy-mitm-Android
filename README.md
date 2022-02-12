@@ -8,32 +8,7 @@ Unfortunately I've lost my PGP private key for uploading Maven artifacts to the 
 LittleProxy - Man-In-The-Middle
 ===============================
 
-LittleProxy-mitm is an extension for 
-[LittleProxy](https://github.com/adamfisk/LittleProxy) which provides all the 
-filter capabilities of LittleProxy with HTTPS sites too. It aims to support 
-every Java platform including Android. To answer HTTPS while offline for caching 
-purposes consider to use 
-[ganskef/LittleProxy-parent](https://github.com/ganskef/LittleProxy-parent). 
-See [Aldo Cortesi](http://corte.si/posts/code/mitmproxy/howitworks/index.html) 
-for a detailed description of proxy interception processes. 
 
-### Get it up and running
-
-*Java* is required to be installed on the system, then execute this commands: <pre>
-$ java -jar littleproxy-mitm-1.1.0-shade.jar
-$ curl --cacert littleproxy-mitm.pem --verbose --proxy localhost:9090 https://github.com/
-</pre>
-
-The first run creates the key store for your Certificate Authority. It's used to 
-generate server certificates on the fly. The ```littleproxy-mitm.pem``` file 
-have to be imported in your browser or within the systems certificates, Mozilla 
-for example:
-
-<img src="https://github.com/ganskef/LittleProxy-mitm/blob/master/import-mozilla-1.png" height="250">
-<img src="https://github.com/ganskef/LittleProxy-mitm/blob/master/import-mozilla-2.png" height="250">
-
-You have to set your browsers proxy settings to 9090. It's hard coded in the 
-simple Launcher class. You may chose an other implementation, of course.
 
 ### Important Security Note
 

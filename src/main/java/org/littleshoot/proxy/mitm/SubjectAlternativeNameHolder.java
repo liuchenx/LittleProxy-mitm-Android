@@ -5,12 +5,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.x509.Extension;
-import org.bouncycastle.asn1.x509.GeneralName;
-import org.bouncycastle.cert.CertIOException;
-import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.spongycastle.asn1.ASN1Encodable;
+import org.spongycastle.asn1.DERSequence;
+import org.spongycastle.asn1.x509.Extension;
+import org.spongycastle.asn1.x509.GeneralName;
+import org.spongycastle.cert.CertIOException;
+import org.spongycastle.cert.X509v3CertificateBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +19,7 @@ public class SubjectAlternativeNameHolder {
     private static final Logger log = LoggerFactory.getLogger(SubjectAlternativeNameHolder.class);
 
     /**
-     * @see org.bouncycastle.asn1.x509.GeneralName
+     * @see org.spongycastle.asn1.x509.GeneralName
      * @see <a href="https://tools.ietf.org/html/rfc5280#section-4.2.1.6">RFC 5280, § 4.2.1.6. Subject Alternative Name</a>
      */
     private static final Pattern TAGS_PATTERN = Pattern.compile("[012345678]");

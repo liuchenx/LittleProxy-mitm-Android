@@ -2,11 +2,11 @@
 
 name: Publish package to GitHub Packages
 on:
-  workflow_dispatch
-#   push:
-#     branches: [ master ]
-#     paths:
-#       - 'gradle.properties'
+#  workflow_dispatch
+  push:
+    branches: [ master ]
+    paths:
+      - 'gradle.properties'
 jobs:
   publish:
     runs-on: ubuntu-latest 

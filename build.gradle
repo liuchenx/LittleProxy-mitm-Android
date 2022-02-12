@@ -13,10 +13,17 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+def ARTIFACT_ID = "${GITHUB_REPOSITORY}".toLowerCase()
+
 jar {
-    baseName "${GITHUB_REPOSITORY}"
+    baseName "${ARTIFACT_ID}"
     version "${VERSION_NAME}"
 }
+
+
 
 publishing {
     repositories {
@@ -24,8 +31,8 @@ publishing {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/${GITHUB_USER_NAME}/${GITHUB_REPOSITORY}")
             credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
+                username = System.getenv("GITHUB_ACTOR") ?: GITHUB_USER_NAME
+                password = System.getenv("GITHUB_TOKEN") ?: properties.getProperty('GITHUB_TOKEN')
             }
         }
     }
@@ -33,9 +40,9 @@ publishing {
     publications {
         release(MavenPublication) {
             groupId "${GROUP_ID}"
-            artifactId "${GITHUB_REPOSITORY}"
+            artifactId "${ARTIFACT_ID}"
             version "${VERSION_NAME}"
-            artifact("$buildDir/libs/${GITHUB_REPOSITORY}-${VERSION_NAME}.jar")
+            artifact("$buildDir/libs/${ARTIFACT_ID}-${VERSION_NAME}.jar")
         }
     }
 }

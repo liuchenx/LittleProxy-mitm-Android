@@ -35,7 +35,7 @@ publishing {
             groupId "${GROUP_ID}"
             artifactId "${GITHUB_REPOSITORY}"
             version "${VERSION_NAME}"
-            artifact("$buildDir/libs/${GITHUB_REPOSITORY}-v${VERSION_NAME}.jar")
+            artifact("$buildDir/libs/${GITHUB_REPOSITORY}-${VERSION_NAME}.jar")
         }
     }
 }

@@ -1,0 +1,19 @@
+
+
+name: test
+on:
+  workflow_dispatch
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest 
+    env:
+      GITHUB_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
+    steps:
+      - name: test
+        run: |
+          echo "start====================="
+          echo "::add-mask::$GITHUB_TOKEN"
+
+
+

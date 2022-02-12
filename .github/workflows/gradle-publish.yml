@@ -13,13 +13,12 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.TOKEN }}
     steps:
       - uses: actions/checkout@v2
-
+      - name: set token
+        run: export GITHUB_TOKEN=$GITHUB_TOKEN
       - name: Build jar
         run: |
           chmod +x ./gradlew
           ./gradlew jar
       - name: Publish to the github packages Repository
-        run: |
-          export GITHUB_TOKEN=$GITHUB_TOKEN
-          ./gradlew publish
+        run: ./gradlew publish
 

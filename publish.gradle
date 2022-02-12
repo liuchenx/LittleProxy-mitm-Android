@@ -1,0 +1,23 @@
+apply plugin: 'maven-publish'
+
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/${GITHUB_USER_NAME}/${GITHUB_REPOSITORY}")
+            credentials {
+                username = GITHUB_USER_NAME
+                password = GITHUB_TOKEN
+            }
+        }
+    }
+    publications {
+        release(MavenPublication) {
+            groupId "${GROUP_ID}"
+            artifactId "${GITHUB_REPOSITORY}"
+            version "${VERSION_NAME}"
+            artifact("$buildDir/libs/${GITHUB_REPOSITORY}-${VERSION_NAME}.jar")
+        }
+    }
+}

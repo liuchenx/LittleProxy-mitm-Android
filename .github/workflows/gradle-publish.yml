@@ -1,6 +1,6 @@
 
 
-name: Publish package to GitHub Packages
+name: CI
 on:
 #  workflow_dispatch
   push:

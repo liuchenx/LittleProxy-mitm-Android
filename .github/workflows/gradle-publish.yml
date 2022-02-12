@@ -10,7 +10,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest 
     env:
-      GITHUB_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.TOKEN }}
     steps:
       - uses: actions/checkout@v2
 

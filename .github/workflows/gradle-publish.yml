@@ -19,5 +19,7 @@ jobs:
           chmod +x ./gradlew
           ./gradlew jar
       - name: Publish to the github packages Repository
-        run: ./gradlew publish
+        run: |
+          export GITHUB_TOKEN=$GITHUB_TOKEN
+          ./gradlew publish
 

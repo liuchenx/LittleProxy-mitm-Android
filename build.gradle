@@ -13,11 +13,11 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-def TOKEN = System.getenv("GITHUB_TOKEN")
-if (TOKEN) {
+def GITHUB_TOKEN = System.getenv("GITHUB_TOKEN")
+if (GITHUB_TOKEN) {
     Properties properties = new Properties()
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
-    TOKEN = properties.getProperty('GITHUB_TOKEN')
+    GITHUB_TOKEN = properties.getProperty('GITHUB_TOKEN')
 }
 
 def ARTIFACT_ID = "${GITHUB_REPOSITORY}".toLowerCase()
@@ -36,7 +36,7 @@ publishing {
             url = uri("https://maven.pkg.github.com/${GITHUB_USER_NAME}/${GITHUB_REPOSITORY}")
             credentials {
                 username = GITHUB_USER_NAME
-                password = TOKEN
+                password = GITHUB_TOKEN
             }
         }
     }

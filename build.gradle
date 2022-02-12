@@ -1,5 +1,8 @@
-apply plugin: 'java'
-apply from: './publish.gradle'
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
 
 repositories {
     mavenCentral()
@@ -15,7 +18,27 @@ jar {
     version "${VERSION_NAME}"
 }
 
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/${GITHUB_USER_NAME}/${GITHUB_REPOSITORY}")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
 
+    publications {
+        release(MavenPublication) {
+            groupId "${GROUP_ID}"
+            artifactId "${GITHUB_REPOSITORY}"
+            version "${VERSION_NAME}"
+            artifact("$buildDir/libs/${GITHUB_REPOSITORY}-v${VERSION_NAME}.jar")
+        }
+    }
+}
 
 dependencies {
     implementation 'com.madgag.spongycastle:bcpkix-jdk15on:1.58.0.0'

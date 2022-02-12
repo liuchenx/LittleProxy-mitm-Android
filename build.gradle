@@ -14,7 +14,8 @@ java {
 }
 
 def GITHUB_TOKEN = System.getenv("GITHUB_TOKEN")
-if (!GITHUB_TOKEN) {
+
+if (GITHUB_TOKEN == null) {
     Properties properties = new Properties()
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
     GITHUB_TOKEN = properties.getProperty('GITHUB_TOKEN')

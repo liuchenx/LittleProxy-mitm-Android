@@ -8,7 +8,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest 
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
     steps:
       - name: test
         run: |

@@ -9,6 +9,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest 
+    env:
+      GITHUB_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
     steps:
       - uses: actions/checkout@v2
 
@@ -18,5 +20,4 @@ jobs:
           ./gradlew jar
       - name: Publish to the github packages Repository
         run: ./gradlew publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
+
